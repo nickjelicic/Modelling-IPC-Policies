@@ -231,7 +231,9 @@ ward.simulation.paired <- function(focus.bay, infectious.states,
         
         ## record subsequent infection if in focus bay
         if(infection%%nrow(infection.status)!=focus.bay){
-          outbreak <- TRUE
+          if(outbreak==FALSE){
+            outbreak <- TRUE
+          }
           other.bay.infections <- other.bay.infections + 1
         }else{
           focus.bay.infections <- focus.bay.infections + 1
@@ -393,8 +395,10 @@ ward.simulation.paired <- function(focus.bay, infectious.states,
         infection.rates[4, ] <- unrestricted.infection.rate
         
         if(queue.departures==FALSE){
-          transfer.times[focus.bay, ] <- T + transfer.period[focus.bay, ]
+          focus_bay_occupants <- which(!infection.status[focus.bay, ]%in%c("Empty", "No Bed"))
+          transfer.times[focus.bay, focus_bay_occupants] <- T + transfer.period[focus.bay, focus_bay_occupants]
         }
+        
         
         
         

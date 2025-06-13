@@ -1,4 +1,4 @@
-triangulation.analytical.metrics <- function(bay.size, ward.size, ward.occupants, gen.matrices, gen.infected.matrices, D.I, D.arrivals,D.infectious.dep,D.departures,
+triangulation.analytical.metrics <- function(bay.size, ward.size, ward.occupants, gen.matrices,  D.I, D.arrivals,D.infected.dep,D.departures,
                                infection.states, infectious.states, infection.probability, arrival.rate, departure.rates, discharge.rates,
                                infection.rates, recovery.rates, quarantine.time, time.seq, difference, spread.coef, close.bay.coef, queue.departures=FALSE, which.results){
   
@@ -11,18 +11,17 @@ triangulation.analytical.metrics <- function(bay.size, ward.size, ward.occupants
   unused_bed.days <- NULL
   unused_bed.days.ward <- NULL
   outbreak.prob <- NULL
-  infectious.discharged <- NULL
+  infected.discharged <- NULL
   departures <- NULL
   
   ## Generate necessary matrices
   
   Q <- transition.rate.matrix.ward(bay.size, ward.size, gen.matrices, arrival.rate, departure.rates, departure.rates, recovery.rates, infection.rates, spread.coef,
-                                   arrival.rate)
-  
+                                   arrival.rate, infection.states, TRUE)
   ## wrong!
   Q.restrictions <- transition.rate.matrix.ward(bay.size, ward.size, gen.matrices, arrival.rate, discharge.rates, departure.rates,
                                                 recovery.rates, infection.rates, 
-                                                spread.coef*close.bay.coef, 0)
+                                                spread.coef*close.bay.coef, 0, infection.states, TRUE)
   
   
   n.states <- nrow(Q)
@@ -52,13 +51,13 @@ triangulation.analytical.metrics <- function(bay.size, ward.size, ward.occupants
       
       outbreak.prob <- c(outbreak.prob, initial.dist %*% outbreak.probability.ward(Q, A, t, outbreak.states))
       
-      infectious.discharged <- c(infectious.discharged, initial.dist %*% direct.transitions(Q, D.infectious.dep, A, t))
+      infected.discharged <- c(infected.discharged, initial.dist %*% direct.transitions(Q, D.infected.dep, A, t))
       
       departures <- c(departures, initial.dist %*% direct.transitions(Q, D.departures, A, t))
       
     }
     
-    Metrics <- cbind(infections, throughput, blocked.patients, unused_bed.days, unused_bed.days.ward, outbreak.prob, infectious.discharged,
+    Metrics <- cbind(infections, throughput, blocked.patients, unused_bed.days, unused_bed.days.ward, outbreak.prob, infected.discharged,
                      departures)
   }
   ## no restriction (keep bay open)
@@ -71,7 +70,7 @@ triangulation.analytical.metrics <- function(bay.size, ward.size, ward.occupants
     unused_bed.days <- NULL
     unused_bed.days.ward <- NULL
     outbreak.prob <- NULL
-    infectious.discharged <- NULL
+    infected.discharged <- NULL
     departures <- NULL
     
     
@@ -109,7 +108,7 @@ triangulation.analytical.metrics <- function(bay.size, ward.size, ward.occupants
         
         outbreak.prob <- c(outbreak.prob, initial.dist%*%outbreak.probability.ward(Q.restrictions, A, t, outbreak.states))
         
-        infectious.discharged <- c(infectious.discharged, initial.dist%*%direct.transitions(Q.restrictions, D.infectious.dep, A, t))
+        infected.discharged <- c(infected.discharged, initial.dist%*%direct.transitions(Q.restrictions, D.infected.dep, A, t))
         
         departures <- c(departures, initial.dist%*%direct.transitions(Q.restrictions, D.departures, A, t))
         
@@ -134,15 +133,15 @@ triangulation.analytical.metrics <- function(bay.size, ward.size, ward.occupants
         outbreak.prob <- c(outbreak.prob, final.states %*% outbreak.probability.ward(Q, A, t - quarantine.time, outbreak.states))
         
         
-        infectious.discharged <- c(infectious.discharged, initial.dist%*%direct.transitions(Q.restrictions, D.infectious.dep, A, quarantine.time) + 
-                                     post.restriction.infectious.discharges + final.states%*%direct.transitions(Q, D.infectious.dep, A, t-quarantine.time))
+        infected.discharged <- c(infected.discharged, initial.dist%*%direct.transitions(Q.restrictions, D.infected.dep, A, quarantine.time) + 
+                                     post.restriction.infectious.discharges + final.states%*%direct.transitions(Q, D.infected.dep, A, t-quarantine.time))
         
         departures <- c(departures, initial.dist%*%direct.transitions(Q.restrictions, D.departures, A, quarantine.time) + 
                           post.restriction.departures + final.states%*%direct.transitions(Q, D.departures, A, t-quarantine.time))
       }
     }
     
-    Metrics.2 <- cbind(infections, throughput, blocked.patients, unused_bed.days, unused_bed.days.ward, outbreak.prob, infectious.discharged, departures)
+    Metrics.2 <- cbind(infections, throughput, blocked.patients, unused_bed.days, unused_bed.days.ward, outbreak.prob, infected.discharged, departures)
     
   }
   

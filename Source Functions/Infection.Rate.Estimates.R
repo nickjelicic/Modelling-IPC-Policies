@@ -21,12 +21,12 @@ infection.estimates <- function(Data){
   
   
   if(length(No.susceptibles)>0){
-    X <- cbind(Susceptible/number.patients, Susceptible*(New.Infectious + Still.Infectious)/number.patients, 
-               Susceptible*Incubating.infectious/number.patients)[-No.susceptibles, ]
+    X <- cbind(Susceptible, Susceptible*(New.Infectious + Still.Infectious), 
+               Susceptible*Incubating.infectious)[-No.susceptibles, ]
     Y <- Incubating[-No.susceptibles]
   }else{
-    X <- cbind(Susceptible/number.patients, Susceptible*(New.Infectious + Still.Infectious)/number.patients, 
-               Susceptible*Incubating.infectious/number.patients)
+    X <- cbind(Susceptible, Susceptible*(New.Infectious + Still.Infectious), 
+               Susceptible*Incubating.infectious)
     Y <- Incubating
   }
   

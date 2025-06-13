@@ -34,7 +34,7 @@ initial.patient.attributes <- function(infection.status,infectious.states, trans
   discharge.period <- matrix(Inf, nrow=nrow(infection.status), ncol=ncol(infection.status))
   
   
-  occupied.beds <- which(infection.status!="No Bed")
+  occupied.beds <- which(!infection.status%in%c("No Bed", "Empty"))
   n.occupied.beds <- length(occupied.beds)
   
   if(n.occupied.beds>0){
@@ -65,7 +65,7 @@ initial.patient.attributes <- function(infection.status,infectious.states, trans
       }else if(LOS.distribution=="Lognormal"){
         transfer.period[occupied.beds] <- rlnorm(n.occupied.beds, mu.ward, sigma.ward)
       }else if(LOS.distribution=="Gamma"){
-        transfer.period[occupied.beds] <- rgamma(n.occupied.beds, shape.ward, scale.ward)
+        transfer.period[occupied.beds] <- rgamma(n.occupied.beds, shape=shape.ward, scale=scale.ward)
       }
     }
     
@@ -75,7 +75,7 @@ initial.patient.attributes <- function(infection.status,infectious.states, trans
       }else if(LOS.distribution=="Lognormal"){
         discharge.period[occupied.beds] <- rlnorm(n.occupied.beds, mu.ward.discharge, sigma.ward.discharge)
       }else if(LOS.distribution=="Gamma"){
-        discharge.period[occupied.beds] <- rgamma(n.occupied.beds, shape.ward.discharge, scale.ward.discharge)
+        discharge.period[occupied.beds] <- rgamma(n.occupied.beds, shape=shape.ward.discharge, scale=scale.ward.discharge)
       }
     }
     

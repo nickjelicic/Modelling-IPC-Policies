@@ -24,7 +24,7 @@ analytical.initial.distribution <- function(bay.size, ward.size, infection.state
     recovery.rates[2:length(recovery.rates)] <- 0
     
     Q <- transition.rate.matrix.ward(bay.size, ward.size, gen.matrices, arrival.rate, departure.rates, 
-                                     departure.rates, recovery.rates, infection.rates, 0, 0)
+                                     departure.rates, recovery.rates, infection.rates, 0, 0, infection.states, 0)
     
     l <- length(time.in.contact)
     times <- c(sort(time.in.contact, decreasing=TRUE), 0)

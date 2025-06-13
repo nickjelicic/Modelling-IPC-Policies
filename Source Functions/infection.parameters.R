@@ -1,8 +1,8 @@
 infection.parameters <- function(Influenza.Data, COVID.Data, Norovirus.Data, RSV.Data, disease, ward){
   
   if(disease=="Influenza A"){
-    mean.latent.period <- 2
-    mean.infectious.period <- 3
+    mean.latent.period <- 1
+    mean.infectious.period <- 9
     
     columns <- which(endsWith(colnames(Influenza.Data), ward))
     

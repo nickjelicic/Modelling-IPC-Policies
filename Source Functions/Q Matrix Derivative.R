@@ -1,5 +1,5 @@
-derivative.Q.matrix <- function(gen.matrices, arrival.rate, discharge.rates, departure.rates, infection.rates, recovery.rates, spread.coef,
-                                restrictions.arrival.rate, parameter){
+derivative.Q.matrix <- function(bay.size, ward.size, gen.matrices, arrival.rate, discharge.rates, departure.rates, infection.rates, recovery.rates, spread.coef,
+                                restrictions.arrival.rate, infection.states, parameter){
   n <- nrow(gen.matrices[[1]])
   D <- matrix(0, nrow=n, ncol=n)
   sequence <- 1:ward.size
@@ -16,6 +16,16 @@ derivative.Q.matrix <- function(gen.matrices, arrival.rate, discharge.rates, dep
   
   
   infection.string <- t(matrix(1:(3*(bay.size^2)), nrow=bay.size^2))
+  
+  states.lab <- gen.ward.states(bay.size, ward.size, infection.states, TRUE, FALSE)
+  occupancy <- as.numeric(states.lab[, bay.size+2])
+  empty.ward.beds <- ward.size-as.numeric(states.lab[, bay.size+2]) - bay.size
+  empty.bay.beds <- NULL
+  for(i in 1:nrow(states.lab)){
+    empty.bay.beds <- c(empty.bay.beds, length(which(states.lab[i, ]=="Empty")))
+  }
+  empty.beds <- empty.ward.beds + empty.bay.beds
+  
   
   if(parameter=="Infection Rate"){
     string <- infection.string[1, ]
@@ -42,19 +52,40 @@ derivative.Q.matrix <- function(gen.matrices, arrival.rate, discharge.rates, dep
       D[transitions] <- i
     }
   }else if(parameter=="Arrival Rate"){
-    string <- string.matrix[parameter, ]
-    for(i in 1:length(string)){
-      transitions <- which(gen.matrices[[1]]==as.numeric(string[i]))
-      D[transitions] <- i
-    }
-    
-    if(restrictions.arrival.rate>0){
-      string <- string.matrix["Restriction arrival rate", ]
+   
+      string <- string.matrix["Arrival Rate", ]
       for(i in 1:length(string)){
         transitions <- which(gen.matrices[[1]]==as.numeric(string[i]))
-        D[transitions] <- i
+        for(j in transitions){
+          
+          if(restrictions.arrival.rate>0){
+            if(j%%n!=0){
+              D[j] <- empty.ward.beds[j%%n]/empty.beds[j%%n]
+            }else{
+              D[j] <- empty.ward.beds[n]/empty.beds[n]
+            }
+          }else{
+            D[j] <- 1
+          }
+          
+        }
+        
       }
-    }
+      
+      if(restrictions.arrival.rate>0){
+        string <- string.matrix["Restriction arrival rate", ]
+        for(i in 1:length(string)){
+          transitions <- which(gen.matrices[[1]]==as.numeric(string[i]))
+          for(j in transitions){
+            if(j%%n!=0){
+              D[j] <- empty.bay.beds[j%%n]/empty.beds[j%%n]
+            }else{
+              D[j] <- empty.bay.beds[n]/empty.beds[n]
+            }
+          }
+        }
+      }
+      
   }else if(parameter=="Discharge Rate"){
     
     string <- string.matrix["Uninfected Discharge Rate", ]

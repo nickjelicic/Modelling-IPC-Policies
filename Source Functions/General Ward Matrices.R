@@ -1,4 +1,4 @@
-general.ward.matrices <- function(bay.size, ward.size, infection.states, infectious.states, outbreak){
+general.ward.matrices <- function(bay.size, ward.size, infection.states, infectious.states, outbreak, random.arrivals=TRUE){
 
   
   
@@ -103,10 +103,16 @@ general.ward.matrices <- function(bay.size, ward.size, infection.states, infecti
           
           if(rates[state.1, state.2]=="lambda"){
             
-              if(states[i, ncol(states)]==(ward.size-bay.size)+length(infection.states)+1){
+            if(random.arrivals==FALSE){
+              if((states[i, ncol(states)]==(ward.size-bay.size)+length(infection.states)+1)){
                 
                 Q[i,j] <- string.matrix[9, 1]
               }
+            }else{
+              Q[i,j] <- string.matrix[9, 1]
+            }
+            
+              
             
             
           }else if(rates[state.1, state.2]=="mu.1"){

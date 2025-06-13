@@ -77,7 +77,7 @@ arrival.patient.attributes <- function(end.time, arrival.rate, transfer.rates, d
       }else if(LOS.distribution=="Lognormal"){
         arrival.transfer.times <- rlnorm(n.arrivals, mu.ward, sigma.ward)
       }else if(LOS.distribution=="Gamma"){
-        arrival.transfer.times <- rgamma(n.arrivals, shape.ward, scale.ward)
+        arrival.transfer.times <- rgamma(n.arrivals, shape=shape.ward, scale=scale.ward)
       }
     }else{
       arrival.transfer.times <- rep(Inf, n.arrivals)
@@ -89,17 +89,17 @@ arrival.patient.attributes <- function(end.time, arrival.rate, transfer.rates, d
       }else if(LOS.distribution=="Lognormal"){
         arrival.discharge.times <- rlnorm(n.arrivals, mu.ward.discharge, sigma.ward.discharge)
       }else if(LOS.distribution=="Gamma"){
-        arrival.discharge.times <- rgamma(n.arrivals, shape.ward.discharge, scale.ward.discharge)
+        arrival.discharge.times <- rgamma(n.arrivals, shape=shape.ward.discharge, scale.ward.discharge)
       }
     }else{
-      arrival.discharage.times <- rep(Inf, n.arrivals)
+      arrival.discharge.times <- rep(Inf, n.arrivals)
     }
     
     
   }else{
     arrival.latent.period <- NULL
     arrival.incubation.period <- NULL
-    arrival.early.sympatomatic.period <- NULL
+    arrival.early.symptomatic.period <- NULL
     arrival.late.symptomatic.period <- NULL
     arrival.transfer.times <- NULL
     arrival.discharge.times <- NULL
