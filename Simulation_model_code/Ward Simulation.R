@@ -20,13 +20,13 @@
 #' bed_status - a matrix of strings representing the infection status of each bed in the ward
 #' The matrix is of size n x m where n is the number of bays in the ward (including side rooms) and m is the largest size of any of these wards
 #' A row of the matrix represents the infection status of beds in that bay. Row 1 always represents side rooms.
-#' An element can be either "Empty", "Susceptible", "Latent", in an infectious state, "Recovered" or "No bed" if no such bed exists
-#' e.g. bed_status <- rbind(c("Susceptible", "No bed"), c("Infectious", "Infectious"),c("Susceptible", "Susceptible"))
+#' An element can be either "Empty", "Susceptible", "Latent", in an infectious state, "Recovered" or "No Bed" if no such bed exists
+#' e.g. bed_status <- rbind(c("Susceptible", "No Bed"), c("Infectious", "Infectious"),c("Susceptible", "Susceptible"))
 #' represents a ward with 1 side room with a susceptible patient, 1 ward with 2 infectious patients and another ward with 2 susceptible patients
 #' 
-#' init_patient_attributes - A list of matrices of the same diensions as bed_status representing patient attributes, in order:
+#' init_patient_attributes - A list of matrices of the same dimensions as bed_status representing patient attributes, in order:
 #' transfer_period - the time until each patient is transferred from the ward
-#' discharge_period -the time until each patient is discharge from the ward
+#' discharge_period -the time until each patient is discharged from the ward
 #' latent_period - the duration of each patient's latent period if they are to catch the infection
 #' incubation_period - the duration of each patient's time in the first infectious period if they are to catch the infection
 #' note that if there is only one infectious period then this is the time for which they will be infectious.
@@ -40,10 +40,10 @@
 #' A row of the matrix represents the infection status of beds in that bay. Row 1 always represents side rooms.
 #' If the bed cannot become infected (either it is empty, does not exist, or the patient is already infected) then the time is set to infinity
 #' 
-#' restrictions - logical. If TRUE, then the focus is bay is closed until the quarantine time.
+#' restrictions - logical. If TRUE, then the focus bay is closed until the quarantine time.
 #' If FALSE, the focus bay is open
 #' 
-#' quarantine_time - positive number representing the time until the focus bay is reopened if it is closed at the start of the simulatino
+#' quarantine_time - positive number representing the time until the focus bay is reopened if it is closed at the start of the simulation
 #' If restrictions=FALSE, this need not be specified
 #' 
 #' close_bay_coef - positive number equal to the infection rate from a closed bay divided by the infection rate from an open bay
@@ -59,7 +59,7 @@
 #' A particular element refers to the same patient for each vector.
 #' scheduled_arrival_times - the time at which each patient arrives at the ward
 #' arrival_transfer_times - the time until each patient is transferred from the ward
-#' arrival_discharge_times - the time until each patient is discharge from the ward
+#' arrival_discharge_times - the time until each patient is discharged from the ward
 #' arrival_latent_period - the duration of each patient's latent period if they are to catch the infection
 #' arrival_incubation_period - the duration of each patient's time in the first infectious period if they are to catch the infection
 #' note that if there is only one infectious period then this is the time for which they will be infectious.
@@ -71,12 +71,12 @@
 #'OUTPUT
 #''A matrix, where the ith row represents the metrics for the ith stopping time. The metrics are, in order:
 #'Number of infections in the focus bay
-#'Nubmer of infections elsewhere in the ward
+#'Number of infections elsewhere in the ward
 #'Arrivals admitted to the ward
 #'Number of blocked arrivals
 #'Unused bed days in the focus bay
 #'Unused bed days elsewhere in the ward
-#'Binary indicator of whether an oubreak occured
+#'Binary indicator of whether an outbreak occurred
 #'Number of patients discharged while infectious
 #'Number of patients transferred while infectious
 #'Number of patients discharged while infected
@@ -126,12 +126,12 @@ ward_simulation_paired <- function(focus_bay, n_infectious_states,
   
   early_symptomatic_times <- early_symptomatic_period
   if(length(infectious_states)>1){
-    early_sympatomatic_times[which(bed_status!=infectious_states[2])] <- Inf
+    early_symptomatic_times[which(bed_status!=infectious_states[2])] <- Inf
   }
   
   late_symptomatic_times <- late_symptomatic_period
   if(length(infectious_states)>2){
-    late_sympatomatic_times[which(bed_status!=infectious_states[3])] <- Inf
+    late_symptomatic_times[which(bed_status!=infectious_states[3])] <- Inf
   }
   
   
@@ -180,6 +180,7 @@ ward_simulation_paired <- function(focus_bay, n_infectious_states,
   Finish <- FALSE
   
   n_bay <- nrow(bed_status)
+  bay_of <- function(idx) ((idx - 1) %% n_bay) + 1
 
   
   #####
@@ -247,10 +248,10 @@ ward_simulation_paired <- function(focus_bay, n_infectious_states,
         ## Arrivals should be placed in other beds on the ward if available
         empty_beds <- which(bed_status=="Empty")
         
-        empty_beds_side_rooms <- empty_beds[which(empty_beds%%nrow(bed_status)==1)]
-        empty_beds_focus_bay <- empty_beds[which(empty_beds%%nrow(bed_status)==2)]
-        
-        empty_beds_other_bays <- empty_beds[which(empty_beds%%nrow(bed_status)==0)]
+        empty_bays <- bay_of(empty_beds)
+        empty_beds_side_rooms <- empty_beds[empty_bays==1 & empty_bays!=focus_bay]
+        empty_beds_focus_bay <- empty_beds[empty_bays==focus_bay]
+        empty_beds_other_bays <- empty_beds[empty_bays!=1 & empty_bays!=focus_bay]
         
         
         new_patient_location <- NULL
@@ -341,7 +342,7 @@ ward_simulation_paired <- function(focus_bay, n_infectious_states,
         infection <- which.min(infection_times)
         
         ## record subsequent infection if in focus bay
-        if(infection%%nrow(bed_status)!=focus_bay){
+        if(bay_of(infection)!=focus_bay){
           if(outbreak==FALSE){
             outbreak <- TRUE
           }
@@ -363,10 +364,10 @@ ward_simulation_paired <- function(focus_bay, n_infectious_states,
         
         discharge <- which.min(discharge_times)
         
-        if((bed_status[discharge]%in%infectious_states) & ((discharge%%n_bay)==focus_bay)){
+        if((bed_status[discharge]%in%infectious_states) & (bay_of(discharge)==focus_bay)){
           infectious_discharged <- infectious_discharged + 1
         }
-        if((bed_status[discharge]%in%c("Latent",infectious_states)) & ((discharge%%n_bay)==focus_bay)){
+        if((bed_status[discharge]%in%c("Latent",infectious_states)) & (bay_of(discharge)==focus_bay)){
           infected_discharged <- infected_discharged + 1
         }
         discharges <- discharges + 1
@@ -393,7 +394,7 @@ ward_simulation_paired <- function(focus_bay, n_infectious_states,
         
         transfer <- which.min(transfer_times)
         
-        if(transfer%%n_bay==focus_bay & restrictions==TRUE){
+        if(bay_of(transfer)==focus_bay & restrictions==TRUE){
           if(queue_departures==TRUE){
             transfer_times[transfer] <- quarantine_time
             days_discharges_delayed <- days_discharges_delayed + (quarantine_time - current_time)
@@ -402,10 +403,10 @@ ward_simulation_paired <- function(focus_bay, n_infectious_states,
           }
           
         }else{
-          if((bed_status[transfer]%in%infectious_states) & ((transfer%%n_bay)==focus_bay)){
+          if((bed_status[transfer]%in%infectious_states) & (bay_of(transfer)==focus_bay)){
             infectious_transferred <- infectious_transferred + 1
           }
-          if((bed_status[transfer]%in%c("Latent", infectious_states)) & ((transfer%%n_bay)==focus_bay)){
+          if((bed_status[transfer]%in%c("Latent", infectious_states)) & (bay_of(transfer)==focus_bay)){
             infected_transferred <- infected_transferred + 1
           }
           transfers <- transfers + 1
@@ -475,7 +476,7 @@ ward_simulation_paired <- function(focus_bay, n_infectious_states,
         
         early_symptomatic_times[early_symptomatic] <- Inf
         if((length(all_states)>which(all_states==infectious_states[1]) + 2)){
-          late_symptomatic_times[early_symptomatic] <- current_time + late_symptomatic_period[incubation]
+          late_symptomatic_times[early_symptomatic] <- current_time + late_symptomatic_period[early_symptomatic]
         }else{
           late_symptomatic_times[early_symptomatic] <- Inf
         }

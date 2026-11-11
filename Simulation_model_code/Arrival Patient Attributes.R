@@ -10,35 +10,35 @@
 #' transfer_rates - vector of two positive numbers, representing the rate at which uninfected and infected patients are transferred from the ward
 #' i.e. transfer_rates = c(uninfected.transfer.rate, infected.transfer.rate)
 #' 
-#' discharge_rates - vector of two positive numbers, representing the rate at which uninfected and infected patients are discharge from the ward
+#' discharge_rates - vector of two positive numbers, representing the rate at which uninfected and infected patients are discharged from the ward
 #' i.e. discharge_rates = c(uninfected.discharge.rate, infected.discharge.rate)
 #' 
 #' recovery_rates - vector of postiive numbers, representing the latent rate and recovery rates from each infectious period.
 #' The length of this vector is equal to 1 + number of infectious periods
 #' i.e. if there is 1 infectious period, recovery_rates=c(latent.rate, recovery.from.infection.rate)
 #' 
-#' discharge_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infection patients are discharged home from ward
+#' discharge_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infected patients are discharged home from ward
 #' i.e. discharge_SD = c(uninfected.discharge_SD, infected.discharge_SD)
 #' IF LOS_distribution="Exponential", this does not need to be specified.
 #' 
-#' transfer_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infection patients are transferred to another ward
+#' transfer_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infected patients are transferred to another ward
 #' i.e. transfer_SD = c(uninfected.transfer_SD, infected.transfer_SD)
 #' IF LOS_distribution="Exponential", this does not need to be specified.
 #' 
 #' latent_SD - positive number, representing the standard deviation for the distribution of the latent distribution if it is gamma distributed
 #' IF LOS_distribution="Exponential", this does not need to be specified.
 #' 
-#' #' LOS_distribution - a character representing the distribution of the transfer and ischarge times of patients from the ward
+#' LOS_distribution - a character representing the distribution of the transfer and discharge times of patients from the ward
 #' This must be either "Exponential", "Gamma" or "Lognormal"
 #' 
-#' latent_distribution - character representing the distrubiton of the latent period duration.
+#' latent_distribution - character representing the distribution of the latent period duration.
 #' This must be either "Exponential" or "Gamma"
 #'
 #' OUTPUTS -  the attributes of the patients that will arrive at the ward as a list of vectors of positive numbers.
 #' A particular element refers to the same patient for each vector.
 #' scheduled_arrival_times - the time at which each patient arrives at the ward
 #' arrival_transfer_times - the time until each patient is transferred from the ward
-#' arrival_discharge_times - the time until each patient is discharge from the ward
+#' arrival_discharge_times - the time until each patient is discharged from the ward
 #' arrival_latent_period - the duration of each patient's latent period if they are to catch the infection
 #' arrival_incubation_period - the duration of each patient's time in the first infectious period if they are to catch the infection
 #' note that if there is only one infectious period then this is the time for which they will be infectious.

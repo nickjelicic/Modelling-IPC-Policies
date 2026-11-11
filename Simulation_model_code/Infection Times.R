@@ -6,8 +6,8 @@
 #' bed_status - a matrix of strings representing the infection status of each bed in the ward
 #' The matrix is of size n x m where n is the number of bays in the ward (including side rooms) and m is the largest size of any of these wards
 #' A row of the matrix represents the infection status of beds in that bay. Row 1 always represents side rooms.
-#' An element can be either "Empty", "Susceptible", "Latent", in an infectious state, "Recovered" or "No bed" if no such bed exists
-#' e.g. bed_status <- rbind(c("Susceptible", "No bed"), c("Infectious", "Infectious"),c("Susceptible", "Susceptible"))
+#' An element can be either "Empty", "Susceptible", "Latent", in an infectious state, "Recovered" or "No Bed" if no such bed exists
+#' e.g. bed_status <- rbind(c("Susceptible", "No Bed"), c("Infectious", "Infectious"),c("Susceptible", "Susceptible"))
 #' represents a ward with 1 side room with a susceptible patient, 1 ward with 2 infectious patients and another ward with 2 susceptible patients
 #' 
 #' infection_rates - a matrix of positive numbers representing the infection rates governing infection transmission within the ward

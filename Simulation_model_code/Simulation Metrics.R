@@ -16,15 +16,15 @@
 #'  representing the infection state distribution of patients in the focus bay
 #'  The kth component of the vector is equal to the probability that a given patient is in infection state k+1
 #' 
-#' #' arrival_rate - positive number, the daily arrival rate of patients to the ward
+#' arrival_rate - positive number, the daily arrival rate of patients to the ward
 #' 
 #' transfer_rates - vector of two positive numbers, representing the rate at which uninfected and infected patients are transferred from the ward
 #' i.e. transfer_rates = c(uninfected.transfer.rate, infected.transfer.rate)
 #' 
-#' discharge_rates - vector of two positive numbers, representing the rate at which uninfected and infected patients are discharge from the ward
+#' discharge_rates - vector of two positive numbers, representing the rate at which uninfected and infected patients are discharged from the ward
 #' i.e. discharge_rates = c(uninfected.discharge.rate, infected.discharge.rate)
 #' 
-#' #' infection_rates - a matrix of positive numbers representing the infection rates governing infection transmission within the ward
+#' infection_rates - a matrix of positive numbers representing the infection rates governing infection transmission within the ward
 #' The matrix is of size 4 x m where m is the number of infectious states
 #' The first row represents the background infection rate
 #' The second row is the side room infection rate
@@ -56,11 +56,11 @@
 #' latent_distribution - character representing the distribution of the latent period duration.
 #' This must be either "Exponential" or "Gamma"
 #' 
-#' discharge_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infection patients are discharged home from ward
+#' discharge_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infected patients are discharged home from ward
 #' i.e. discharge_SD = c(uninfected.discharge_SD, infected.discharge_SD)
-#' #' IF LOS_distribution="Exponential", this does not need to be specified.
+#' IF LOS_distribution="Exponential", this does not need to be specified.
 #' 
-#' transfer_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infection patients are transferred to another ward
+#' transfer_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infected patients are transferred to another ward
 #' i.e. transfer_SD = c(uninfected.transfer_SD, infected.transfer_SD)
 #' IF LOS_distribution="Exponential", this does not need to be specified.
 #' 
@@ -76,12 +76,12 @@
 #' OUTPUT
 #''A matrix, where the ith row represents the metrics for the ith stopping time. The metrics are, in order:
 #'Number of infections in the focus bay
-#'Nubmer of infections elsewhere in the ward
+#'Number of infections elsewhere in the ward
 #'Arrivals admitted to the ward
 #'Number of blocked arrivals
 #'Unused bed days in the focus bay
 #'Unused bed days elsewhere in the ward
-#'Binary indicator of whether an oubreak occured
+#'Binary indicator of whether an outbreak occurred
 #'Number of patients discharged while infectious
 #'Number of patients transferred while infectious
 #'Number of patients discharged while infected

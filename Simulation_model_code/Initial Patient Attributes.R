@@ -4,42 +4,42 @@
 #' bed_status - a matrix of strings representing the infection status of each bed in the ward
 #' The matrix is of size n x m where n is the number of bays in the ward (including side rooms) and m is the largest size of any of these wards
 #' A row of the matrix represents the infection status of beds in that bay. Row 1 always represents side rooms.
-#' An element can be either "Empty", "Susceptible", "Latent", in an infectious state, "Recovered" or "No bed" if no such bed exists
-#' e.g. bed_status <- rbind(c("Susceptible", "No bed"), c("Infectious", "Infectious"),c("Susceptible", "Susceptible"))
+#' An element can be either "Empty", "Susceptible", "Latent", in an infectious state, "Recovered" or "No Bed" if no such bed exists
+#' e.g. bed_status <- rbind(c("Susceptible", "No Bed"), c("Infectious", "Infectious"),c("Susceptible", "Susceptible"))
 #' represents a ward with 1 side room with a susceptible patient, 1 ward with 2 infectious patients and another ward with 2 susceptible patients
 #' 
 #' n_infectious_states - positive integer, either 1, 2 or 3. The number of infectious states.
 #' 
-#' #' transfer_rates - vector of two positive numbers, representing the rate at which uninfected and infected patients are transferred from the ward
+#' transfer_rates - vector of two positive numbers, representing the rate at which uninfected and infected patients are transferred from the ward
 #' i.e. transfer_rates = c(uninfected.transfer.rate, infected.transfer.rate)
 #' 
-#' #' discharge_rates - vector of two positive numbers, representing the rate at which uninfected and infected patients are discharge from the ward
+#' discharge_rates - vector of two positive numbers, representing the rate at which uninfected and infected patients are discharged from the ward
 #' i.e. discharge_rates = c(uninfected.discharge.rate, infected.discharge.rate)
 #' 
 #' recovery_rates - vector of positive numbers, representing the latent rate and recovery rates from each infectious period.
 #' The length of this vector is equal to 1 + number of infectious periods
 #' i.e. if there is 1 infectious period, recovery_rates=c(latent.rate, recovery.from.infection.rate)
 #' 
-#' discharge_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infection patients are discharged home from ward
+#' discharge_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infected patients are discharged home from ward
 #' i.e. discharge_SD = c(uninfected.discharge_SD, infected.discharge_SD)
-#' #' IF LOS_distribution="Exponential", this does not need to be specified.
+#' IF LOS_distribution="Exponential", this does not need to be specified.
 #' 
-#' transfer_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infection patients are transferred to another ward
+#' transfer_SD - vector of two positive numbers, representing the standard deviation for the distribution of the time until uninfected and infected patients are transferred to another ward
 #' i.e. transfer_SD = c(uninfected.transfer_SD, infected.transfer_SD)
 #' IF LOS_distribution="Exponential", this does not need to be specified.
 #' 
 #' latent_SD - positive number, representing the standard deviation for the distribution of the latent distribution if it is gamma distributed
 #' IF LOS_distribution="Exponential", this does not need to be specified.
 #' 
-#' LOS_distribution - a character representing the distribution of the transfer and ischarge times of patients from the ward
+#' LOS_distribution - a character representing the distribution of the transfer and discharge times of patients from the ward
 #' This must be either "Exponential", "Gamma" or "Lognormal"
-#' latent_distribution - character representing the distrubiton of the latent period duration.
+#' latent_distribution - character representing the distribution of the latent period duration.
 #' This must be either "Exponential" or "Gamma"
 #' 
 #' OUTPUT
-#' A list of matrices of the same diensions as bed_status representing patient attributes, in order:
+#' A list of matrices of the same dimensions as bed_status representing patient attributes, in order:
 #' transfer_period - the time until each patient is transferred from the ward
-#' discharge_period -the time until each patient is discharge from the ward
+#' discharge_period -the time until each patient is discharged from the ward
 #' latent_period - the duration of each patient's latent period if they are to catch the infection
 #' incubation_period - the duration of each patient's time in the first infectious period if they are to catch the infection
 #' note that if there is only one infectious period then this is the time for which they will be infectious.
