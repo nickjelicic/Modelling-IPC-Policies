@@ -89,7 +89,7 @@
 #'Number of days of delayed discharges
 #'Number of discharges
 #'Number of transfers
-simulation.ward.metrics <- function(ward_configuration, bay_occupants,
+simulation_ward_metrics <- function(ward_configuration, bay_occupants,
                                     n_infectious_states,
                                                   infection_distribution, arrival_rate, transfer_rates, discharge_rates,
                                     infection_rates, recovery_rates, quarantine_time=0, spread_coef, close_bay_coef, time_seq, LOS_distribution,
@@ -105,7 +105,7 @@ simulation.ward.metrics <- function(ward_configuration, bay_occupants,
     infectious_states <- c("Pre-symptomatic", "Early symptomatic", "Late symptomatic")
   }
   
-  infection_states <- c("Empty", "Susceptible", "Latent", infectious_states, "Recovered")
+  all_states <- c("Empty", "Susceptible", "Latent", infectious_states, "Recovered")
   
   ## determine initial state of the bay
   if(nrow(infection_rates)<4){
@@ -114,45 +114,45 @@ simulation.ward.metrics <- function(ward_configuration, bay_occupants,
   infection_rates[4, ] <- infection_rates[3, ]*spread_coef
   
   unrestricted_infection_rates <- infection_rates
-  infection_rates.rest <- infection_rates
-  infection_rates.rest[4, ] <- infection_rates[4, ]*close_bay_coef
+  infection_rates_rest <- infection_rates
+  infection_rates_rest[4, ] <- infection_rates[4, ]*close_bay_coef
   
   if(restrictions==TRUE){
-    infection_rates <- infection_rates.rest
+    infection_rates <- infection_rates_rest
   }
   
-  infection_status <- matrix("No Bed", nrow=length(ward_configuration), ncol=max(ward_configuration))
+  bed_status <- matrix("No Bed", nrow=length(ward_configuration), ncol=max(ward_configuration))
   for(bay in 1:length(ward_configuration)){
     if(ward_configuration[bay]>0){
-      infection_status[bay, 1:ward_configuration[bay]] <- "Empty"
+      bed_status[bay, 1:ward_configuration[bay]] <- "Empty"
     }
     if(bay_occupants[bay]>0){
-      infection_status[bay, 1:bay_occupants[bay]] <- "Susceptible"
+      bed_status[bay, 1:bay_occupants[bay]] <- "Susceptible"
     }
   }
   
   if(bay_occupants[2]>0){
     for(i in 1:bay_occupants[2]){
-      infection_status[2, i] <- infection_states[sample(2:length(infection_states),size=1, prob=infection_distribution)]
+      bed_status[2, i] <- all_states[sample(2:length(all_states),size=1, prob=infection_distribution)]
     }
   }
   
   focus_bay <- 2
   ## initial patient attributes
-  init.patient.attributes <- initial.patient.attributes(infection_status, n_infectious_states, transfer_rates, discharge_rates, recovery_rates,
+  init_patient_attributes <- initial_patient_attributes(bed_status, n_infectious_states, transfer_rates, discharge_rates, recovery_rates,
                                                         discharge_SD, 
                                                         transfer_SD, latent_SD, LOS_distribution, latent_distribution)
   
   ## infection times
-  infection_times <- infection.times.sample(0, infection_status, infection_rates, 2, n_infectious_states, spread_to_focus_bay)
+  infection_times <- infection_times_sample(0, bed_status, infection_rates, 2, n_infectious_states, spread_to_focus_bay)
   
   ## new patient attributes
-  new.patient.attributes <- arrival.patient.attributes(max(time_seq), arrival_rate, transfer_rates, discharge_rates, recovery_rates, discharge_SD, 
+  new_patient_attributes <- arrival_patient_attributes(max(time_seq), arrival_rate, transfer_rates, discharge_rates, recovery_rates, discharge_SD, 
                                                        transfer_SD, latent_SD, LOS_distribution, latent_distribution)
   
-  metrics <- ward.simulation.paired(focus_bay, n_infectious_states, unrestricted_infection_rates, time_seq, infection_status,
-                                      init.patient.attributes, infection_times, restrictions, quarantine_time, close_bay_coef, spread_to_focus_bay,
-                                      queue_departures, new.patient.attributes)
+  metrics <- ward_simulation_paired(focus_bay, n_infectious_states, unrestricted_infection_rates, time_seq, bed_status,
+                                      init_patient_attributes, infection_times, restrictions, quarantine_time, close_bay_coef, spread_to_focus_bay,
+                                      queue_departures, new_patient_attributes)
   
   
   return(metrics)

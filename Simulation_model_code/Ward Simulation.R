@@ -1,7 +1,7 @@
 #' This function is the main body of the simulation and determines the key metrics for the ward
 #'
 #'INPUTS
-#' focus_bay - a positive integer between 1 and nrow(infection_status) representing the focus bay
+#' focus_bay - a positive integer between 1 and nrow(bed_status) representing the focus bay
 #' 
 #' n_infectious_states - positive integer, either 1, 2 or 3. The number of infectious states.
 #' 
@@ -17,14 +17,14 @@
 #' 
 #' time_seq - a vector of positive numbers, representing various stopping times for the simulation
 #'   
-#' infection_status - a matrix of strings representing the infection status of each bed in the ward
+#' bed_status - a matrix of strings representing the infection status of each bed in the ward
 #' The matrix is of size n x m where n is the number of bays in the ward (including side rooms) and m is the largest size of any of these wards
 #' A row of the matrix represents the infection status of beds in that bay. Row 1 always represents side rooms.
 #' An element can be either "Empty", "Susceptible", "Latent", in an infectious state, "Recovered" or "No bed" if no such bed exists
-#' e.g. infection_status <- rbind(c("Susceptible", "No bed"), c("Infectious", "Infectious"),c("Susceptible", "Susceptible"))
+#' e.g. bed_status <- rbind(c("Susceptible", "No bed"), c("Infectious", "Infectious"),c("Susceptible", "Susceptible"))
 #' represents a ward with 1 side room with a susceptible patient, 1 ward with 2 infectious patients and another ward with 2 susceptible patients
 #' 
-#' init_patient_attributes - A list of matrices of the same diensions as infection_status representing patient attributes, in order:
+#' init_patient_attributes - A list of matrices of the same diensions as bed_status representing patient attributes, in order:
 #' transfer_period - the time until each patient is transferred from the ward
 #' discharge_period -the time until each patient is discharge from the ward
 #' latent_period - the duration of each patient's latent period if they are to catch the infection
@@ -85,9 +85,9 @@
 #'Number of discharges
 #'Number of transfers
 
-ward.simulation.paired <- function(focus_bay, n_infectious_states,
+ward_simulation_paired <- function(focus_bay, n_infectious_states,
                             infection_rates, time_seq, 
-                            infection_status, init_patient_attributes, infection_times,
+                            bed_status, init_patient_attributes, infection_times,
                             restrictions=FALSE, quarantine_time=0, close_bay_coef=0, spread_to_focus_bay=FALSE, queue_departures=TRUE, 
                             new_patient_attributes){
   
@@ -102,84 +102,84 @@ ward.simulation.paired <- function(focus_bay, n_infectious_states,
     infectious_states <- c("Pre-symptomatic", "Early symptomatic", "Late symptomatic")
   }
   
-  infection_states <- c("Empty", "Susceptible", "Latent", infectious_states, "Recovered")
+  all_states <- c("Empty", "Susceptible", "Latent", infectious_states, "Recovered")
   
   ## Initial Conditions
   #####
-  patient.attributes <- init_patient_attributes
+  patient_attributes <- init_patient_attributes
   
-  transfer.period <- patient.attributes[[1]]
-  discharge.period <- patient.attributes[[2]]
-  latent.period <- patient.attributes[[3]]
-  incubation.period <- patient.attributes[[4]]
-  early.symptomatic.period <- patient.attributes[[5]]
-  late.symptomatic.period <- patient.attributes[[6]]
+  transfer_period <- patient_attributes[[1]]
+  discharge_period <- patient_attributes[[2]]
+  latent_period <- patient_attributes[[3]]
+  incubation_period <- patient_attributes[[4]]
+  early_symptomatic_period <- patient_attributes[[5]]
+  late_symptomatic_period <- patient_attributes[[6]]
   
-  transfer.times <- transfer.period
-  discharge.times <- discharge.period
+  transfer_times <- transfer_period
+  discharge_times <- discharge_period
   
-  latent.times <- latent.period
-  latent.times[which(infection_status!="Latent")] <- Inf
+  latent_times <- latent_period
+  latent_times[which(bed_status!="Latent")] <- Inf
   
-  incubation.times <- incubation.period
-  incubation.times[which(infection_status!=infectious_states[1])] <- Inf
+  incubation_times <- incubation_period
+  incubation_times[which(bed_status!=infectious_states[1])] <- Inf
   
-  early.symptomatic.times <- early.symptomatic.period
+  early_symptomatic_times <- early_symptomatic_period
   if(length(infectious_states)>1){
-    early.sympatomatic.times[which(infection_status!=infectious_states[2])] <- Inf
+    early_sympatomatic_times[which(bed_status!=infectious_states[2])] <- Inf
   }
   
-  late.symptomatic.times <- late.symptomatic.period
+  late_symptomatic_times <- late_symptomatic_period
   if(length(infectious_states)>2){
-    late.sympatomatic.times[which(infection_status!=infectious_states[3])] <- Inf
+    late_sympatomatic_times[which(bed_status!=infectious_states[3])] <- Inf
   }
   
   
-  scheduled.arrival.times <- new_patient_attributes[[1]]
-  arrival.transfer.times <- new_patient_attributes[[2]]
-  arrival.discharge.times <- new_patient_attributes[[3]]
-  arrival.latent.period <- new_patient_attributes[[4]]
-  arrival.incubation.period <- new_patient_attributes[[5]]
-  arrival.early.symptomatic.period <- new_patient_attributes[[6]]
-  arrival.late.symptomatic.period <- new_patient_attributes[[7]]
+  scheduled_arrival_times <- new_patient_attributes[[1]]
+  arrival_transfer_times <- new_patient_attributes[[2]]
+  arrival_discharge_times <- new_patient_attributes[[3]]
+  arrival_latent_period <- new_patient_attributes[[4]]
+  arrival_incubation_period <- new_patient_attributes[[5]]
+  arrival_early_symptomatic_period <- new_patient_attributes[[6]]
+  arrival_late_symptomatic_period <- new_patient_attributes[[7]]
   ## 
   if(restrictions==TRUE){
-    end.restriction.time <- quarantine_time
+    end_restriction_time <- quarantine_time
     
-    unrestricted.infection.rate <- infection_rates[4, ]
+    unrestricted_infection_rate <- infection_rates[4, ]
     infection_rates[4, ] <- infection_rates[4, ]*close_bay_coef
     
   }else{
-    end.restriction.time <- Inf
+    end_restriction_time <- Inf
   }
   
-  T <- 0
-  focus_bay.infections <- 0
-  other.bay.infections <- 0
-  new.arrivals.admitted <- 0
-  blocked.arrivals <- 0
-  unused_bed.days.focus_bay <- 0
-  unused_bed.days.other.bays <- 0
-  infectious.discharged <- 0
-  infectious.transferred <- 0
-  infected.discharged <- 0
-  infected.transferred <- 0
-  days.discharges.delayed <- 0
+  current_time <- 0
+  focus_bay_infections <- 0
+  other_bay_infections <- 0
+  new_arrivals_admitted <- 0
+  blocked_arrivals <- 0
+  unused_bed_days_focus_bay <- 0
+  unused_bed_days_other_bays <- 0
+  infectious_discharged <- 0
+  infectious_transferred <- 0
+  infected_discharged <- 0
+  infected_transferred <- 0
+  days_discharges_delayed <- 0
   discharges <- 0
   transfers <- 0
-  ward.occupancy <- 0
+  ward_occupancy <- 0
   outbreak <- FALSE
   
   time_seq <- sort(time_seq, decreasing=FALSE)
-  end.time <- time_seq[1]
+  end_time <- time_seq[1]
   
-  Metrics <- NULL
+  metrics_table <- NULL
   
-  bay.occupancy <- length(which(infection_status!="Empty"))
+  bay_occupancy <- length(which(bed_status!="Empty"))
   
   Finish <- FALSE
   
-  n.bay <- nrow(infection_status)
+  n_bay <- nrow(bed_status)
 
   
   #####
@@ -188,133 +188,133 @@ ward.simulation.paired <- function(focus_bay, n_infectious_states,
   
   while(Finish==FALSE){
     
-    if(length(scheduled.arrival.times)>0){
-      first.arrival.time <- min(scheduled.arrival.times)
+    if(length(scheduled_arrival_times)>0){
+      first_arrival_time <- min(scheduled_arrival_times)
     }else{
-      first.arrival.time <- Inf
+      first_arrival_time <- Inf
     }
     
-    first.infection.time <- min(infection_times)
-    first.transfer.time <- min(transfer.times)
-    first.discharge.time <- min(discharge.times)
+    first_infection_time <- min(infection_times)
+    first_transfer_time <- min(transfer_times)
+    first_discharge_time <- min(discharge_times)
     
-    first.latent.time <- min(latent.times)
-    first.incubation.time <- min(incubation.times)
-    
-    
-    first.early.symptomatic.time <- min(early.symptomatic.times)
-    first.late.symptomatic.time <- min(late.symptomatic.times)
+    first_latent_time <- min(latent_times)
+    first_incubation_time <- min(incubation_times)
     
     
-    event.time <- min(first.arrival.time, first.infection.time, first.transfer.time, first.discharge.time,
-                      first.latent.time, first.incubation.time, 
-                      first.early.symptomatic.time, first.late.symptomatic.time, end.restriction.time)
+    first_early_symptomatic_time <- min(early_symptomatic_times)
+    first_late_symptomatic_time <- min(late_symptomatic_times)
     
-    empty.beds.focus_bay <- length(which(infection_status[focus_bay, ]=="Empty"))
-    empty.beds.other.bays <- length(which(infection_status[-focus_bay, ]=="Empty"))
     
-    if(event.time > end.time){
+    event_time <- min(first_arrival_time, first_infection_time, first_transfer_time, first_discharge_time,
+                      first_latent_time, first_incubation_time, 
+                      first_early_symptomatic_time, first_late_symptomatic_time, end_restriction_time)
+    
+    n_empty_beds_focus_bay <- length(which(bed_status[focus_bay, ]=="Empty"))
+    n_empty_beds_other_bays <- length(which(bed_status[-focus_bay, ]=="Empty"))
+    
+    if(event_time > end_time){
       time_seq <- time_seq[-1]
       
-      unused_bed.days.focus_bay <- unused_bed.days.focus_bay + (end.time-T) * empty.beds.focus_bay
-      unused_bed.days.other.bays <- unused_bed.days.other.bays + (end.time-T) * empty.beds.other.bays
+      unused_bed_days_focus_bay <- unused_bed_days_focus_bay + (end_time-current_time) * n_empty_beds_focus_bay
+      unused_bed_days_other_bays <- unused_bed_days_other_bays + (end_time-current_time) * n_empty_beds_other_bays
       
-      T <- end.time
+      current_time <- end_time
       
       if(length(time_seq)>0){
-        end.time <- time_seq[1]
+        end_time <- time_seq[1]
       }else{
         Finish <- TRUE
       }
       
       
       
-      metrics <- c(focus_bay.infections, other.bay.infections, new.arrivals.admitted, blocked.arrivals, unused_bed.days.focus_bay, unused_bed.days.other.bays, outbreak, infectious.discharged,
-                   infectious.transferred, infected.discharged, infected.transferred, days.discharges.delayed, discharges, transfers)
+      metrics_row <- c(focus_bay_infections, other_bay_infections, new_arrivals_admitted, blocked_arrivals, unused_bed_days_focus_bay, unused_bed_days_other_bays, outbreak, infectious_discharged,
+                   infectious_transferred, infected_discharged, infected_transferred, days_discharges_delayed, discharges, transfers)
       
-      Metrics <- rbind(Metrics, metrics)
+      metrics_table <- rbind(metrics_table, metrics_row)
       
     }else{
       
-      unused_bed.days.focus_bay <- unused_bed.days.focus_bay + (event.time - T) * empty.beds.focus_bay
-      unused_bed.days.other.bays <- unused_bed.days.other.bays + (event.time - T) * empty.beds.other.bays
+      unused_bed_days_focus_bay <- unused_bed_days_focus_bay + (event_time - current_time) * n_empty_beds_focus_bay
+      unused_bed_days_other_bays <- unused_bed_days_other_bays + (event_time - current_time) * n_empty_beds_other_bays
       
-      T <- event.time
+      current_time <- event_time
       
-      if(event.time==first.arrival.time){
+      if(event_time==first_arrival_time){
         
         
         ## Arrivals should be placed in other beds on the ward if available
-        empty.beds <- which(infection_status=="Empty")
+        empty_beds <- which(bed_status=="Empty")
         
-        empty.beds.side.rooms <- empty.beds[which(empty.beds%%nrow(infection_status)==1)]
-        empty.beds.focus_bay <- empty.beds[which(empty.beds%%nrow(infection_status)==2)]
+        empty_beds_side_rooms <- empty_beds[which(empty_beds%%nrow(bed_status)==1)]
+        empty_beds_focus_bay <- empty_beds[which(empty_beds%%nrow(bed_status)==2)]
         
-        empty.beds.other.bays <- empty.beds[which(empty.beds%%nrow(infection_status)==0)]
+        empty_beds_other_bays <- empty_beds[which(empty_beds%%nrow(bed_status)==0)]
         
         
-        new.patient.location <- NULL
+        new_patient_location <- NULL
         
         if(random_arrivals==TRUE){
           
           if(restrictions==TRUE){
             
-            available.beds <- c(empty.beds.side.rooms, empty.beds.other.bays)
+            available_beds <- c(empty_beds_side_rooms, empty_beds_other_bays)
           }else{
-            available.beds <- c(empty.beds.side.rooms, empty.beds.focus_bay, empty.beds.other.bays)
+            available_beds <- c(empty_beds_side_rooms, empty_beds_focus_bay, empty_beds_other_bays)
           }
-          if(length(available.beds)==0){
-            blocked.arrivals <- blocked.arrivals + 1
-          }else if(length(available.beds)==1){
-            new.patient.location <- available.beds
+          if(length(available_beds)==0){
+            blocked_arrivals <- blocked_arrivals + 1
+          }else if(length(available_beds)==1){
+            new_patient_location <- available_beds
           }else{
-            new.patient.location <- sample(available.beds, 1)
+            new_patient_location <- sample(available_beds, 1)
           }
           
         }else{
           
-          if(length(empty.beds.other.bays)>0){
+          if(length(empty_beds_other_bays)>0){
             
-            if(length(empty.beds.other.bays)==1){
-              new.patient.location <- empty.beds.other.bays
+            if(length(empty_beds_other_bays)==1){
+              new_patient_location <- empty_beds_other_bays
             }else{
-              new.patient.location <- sample(empty.beds.other.bays, 1)
+              new_patient_location <- sample(empty_beds_other_bays, 1)
             }
-          }else if(length(empty.beds.focus_bay)>0 & restrictions==FALSE){
-            if(length(empty.beds.focus_bay)==1){
-              new.patient.location <- empty.beds.focus_bay
+          }else if(length(empty_beds_focus_bay)>0 & restrictions==FALSE){
+            if(length(empty_beds_focus_bay)==1){
+              new_patient_location <- empty_beds_focus_bay
             }else{
-              new.patient.location <- sample(empty.beds.focus_bay, 1)
+              new_patient_location <- sample(empty_beds_focus_bay, 1)
             }
-          }else if(length(empty.beds.side.rooms)>0){
-            if(length(empty.beds.side.rooms)==1){
-              new.patient.location <- empty.beds.side.rooms
+          }else if(length(empty_beds_side_rooms)>0){
+            if(length(empty_beds_side_rooms)==1){
+              new_patient_location <- empty_beds_side_rooms
             }else{
-              new.patient.location <- sample(empty.beds.side.rooms, 1)
+              new_patient_location <- sample(empty_beds_side_rooms, 1)
             }
           }else{
-            blocked.arrivals <- blocked.arrivals + 1
+            blocked_arrivals <- blocked_arrivals + 1
           }
           
         }
         
         
-        if(length(new.patient.location)>0){
-          ward.occupancy <- ward.occupancy + 1
-          new.arrivals.admitted <- new.arrivals.admitted + 1
+        if(length(new_patient_location)>0){
+          ward_occupancy <- ward_occupancy + 1
+          new_arrivals_admitted <- new_arrivals_admitted + 1
           
-          infection_status[new.patient.location] <- "Susceptible"
+          bed_status[new_patient_location] <- "Susceptible"
           
           
-          transfer.times[new.patient.location] <- T + arrival.transfer.times[1]
-          discharge.times[new.patient.location] <- T + arrival.discharge.times[1]
+          transfer_times[new_patient_location] <- current_time + arrival_transfer_times[1]
+          discharge_times[new_patient_location] <- current_time + arrival_discharge_times[1]
           
-          transfer.period[new.patient.location] <- arrival.transfer.times[1] 
-          discharge.period[new.patient.location] <- arrival.discharge.times[1]
-          latent.period[new.patient.location] <- arrival.latent.period[1]
-          incubation.period[new.patient.location] <- arrival.incubation.period[1]
-          early.symptomatic.period[new.patient.location] <- arrival.early.symptomatic.period[1]
-          late.symptomatic.period[new.patient.location] <- arrival.late.symptomatic.period[1]
+          transfer_period[new_patient_location] <- arrival_transfer_times[1] 
+          discharge_period[new_patient_location] <- arrival_discharge_times[1]
+          latent_period[new_patient_location] <- arrival_latent_period[1]
+          incubation_period[new_patient_location] <- arrival_incubation_period[1]
+          early_symptomatic_period[new_patient_location] <- arrival_early_symptomatic_period[1]
+          late_symptomatic_period[new_patient_location] <- arrival_late_symptomatic_period[1]
         }
         
         ## Priority order of placing new patients (if occupied move to next one)
@@ -322,207 +322,207 @@ ward.simulation.paired <- function(focus_bay, n_infectious_states,
         # 2. Focus bay
         # 3. Side Room
 
-        scheduled.arrival.times <- scheduled.arrival.times[-1]
-        arrival.transfer.times <- arrival.transfer.times[-1]
-        arrival.discharge.times <- arrival.discharge.times[-1]
-        arrival.latent.period <- arrival.latent.period[-1]
-        arrival.incubation.period <- arrival.incubation.period[-1]
-        arrival.early.symptomatic.period <- arrival.early.symptomatic.period[-1]
-        arrival.late.symptomatic.period <- arrival.late.symptomatic.period[-1]
+        scheduled_arrival_times <- scheduled_arrival_times[-1]
+        arrival_transfer_times <- arrival_transfer_times[-1]
+        arrival_discharge_times <- arrival_discharge_times[-1]
+        arrival_latent_period <- arrival_latent_period[-1]
+        arrival_incubation_period <- arrival_incubation_period[-1]
+        arrival_early_symptomatic_period <- arrival_early_symptomatic_period[-1]
+        arrival_late_symptomatic_period <- arrival_late_symptomatic_period[-1]
         
-        infection_times <- infection.times.sample(T, infection_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
+        infection_times <- infection_times_sample(current_time, bed_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
         
       }
       ## Infection
-      if(event.time==first.infection.time){
+      if(event_time==first_infection_time){
         
         
         
         infection <- which.min(infection_times)
         
         ## record subsequent infection if in focus bay
-        if(infection%%nrow(infection_status)!=focus_bay){
+        if(infection%%nrow(bed_status)!=focus_bay){
           if(outbreak==FALSE){
             outbreak <- TRUE
           }
-          other.bay.infections <- other.bay.infections + 1
+          other_bay_infections <- other_bay_infections + 1
         }else{
-          focus_bay.infections <- focus_bay.infections + 1
+          focus_bay_infections <- focus_bay_infections + 1
         }
         
-        infection_status[infection] <- "Latent"
+        bed_status[infection] <- "Latent"
         infection_times[infection] <- Inf
         
         ## Additional Transfer + Discharge LOS HERE!!
         
-        latent.times[infection] <- T + latent.period[infection]
+        latent_times[infection] <- current_time + latent_period[infection]
         
       }
       ## Departure from the bay
-      if(event.time==first.discharge.time){
+      if(event_time==first_discharge_time){
         
-        discharge <- which.min(discharge.times)
+        discharge <- which.min(discharge_times)
         
-        if((infection_status[discharge]%in%infectious_states) & ((discharge%%n.bay)==focus_bay)){
-          infectious.discharged <- infectious.discharged + 1
+        if((bed_status[discharge]%in%infectious_states) & ((discharge%%n_bay)==focus_bay)){
+          infectious_discharged <- infectious_discharged + 1
         }
-        if((infection_status[discharge]%in%c("Latent",infectious_states)) & ((discharge%%n.bay)==focus_bay)){
-          infected.discharged <- infected.discharged + 1
+        if((bed_status[discharge]%in%c("Latent",infectious_states)) & ((discharge%%n_bay)==focus_bay)){
+          infected_discharged <- infected_discharged + 1
         }
         discharges <- discharges + 1
         
-        infection_status[discharge] <- "Empty"
+        bed_status[discharge] <- "Empty"
         infection_times[discharge] <- Inf
         
-        infection_times <- infection.times.sample(T, infection_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
+        infection_times <- infection_times_sample(current_time, bed_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
         
-        discharge.times[discharge] <- Inf
-        transfer.times[discharge] <- Inf
-        latent.times[discharge] <- Inf
-        incubation.times[discharge] <- Inf
-        early.symptomatic.times[discharge] <- Inf
-        late.symptomatic.times[discharge] <- Inf
+        discharge_times[discharge] <- Inf
+        transfer_times[discharge] <- Inf
+        latent_times[discharge] <- Inf
+        incubation_times[discharge] <- Inf
+        early_symptomatic_times[discharge] <- Inf
+        late_symptomatic_times[discharge] <- Inf
         
-        latent.period[discharge] <- Inf
-        incubation.period[discharge] <- Inf
-        early.symptomatic.period[discharge] <- Inf
-        late.symptomatic.period[discharge] <- Inf
+        latent_period[discharge] <- Inf
+        incubation_period[discharge] <- Inf
+        early_symptomatic_period[discharge] <- Inf
+        late_symptomatic_period[discharge] <- Inf
         
       }
-      if(event.time==first.transfer.time){
+      if(event_time==first_transfer_time){
         
-        transfer <- which.min(transfer.times)
+        transfer <- which.min(transfer_times)
         
-        if(transfer%%n.bay==focus_bay & restrictions==TRUE){
+        if(transfer%%n_bay==focus_bay & restrictions==TRUE){
           if(queue_departures==TRUE){
-            transfer.times[transfer] <- quarantine_time
-            days.discharges.delayed <- days.discharges.delayed + (quarantine_time - T)
+            transfer_times[transfer] <- quarantine_time
+            days_discharges_delayed <- days_discharges_delayed + (quarantine_time - current_time)
           }else{
-            transfer.times[transfer] <- Inf
+            transfer_times[transfer] <- Inf
           }
           
         }else{
-          if((infection_status[transfer]%in%infectious_states) & ((transfer%%n.bay)==focus_bay)){
-            infectious.transferred <- infectious.transferred + 1
+          if((bed_status[transfer]%in%infectious_states) & ((transfer%%n_bay)==focus_bay)){
+            infectious_transferred <- infectious_transferred + 1
           }
-          if((infection_status[transfer]%in%c("Latent", infectious_states)) & ((transfer%%n.bay)==focus_bay)){
-            infected.transferred <- infected.transferred + 1
+          if((bed_status[transfer]%in%c("Latent", infectious_states)) & ((transfer%%n_bay)==focus_bay)){
+            infected_transferred <- infected_transferred + 1
           }
           transfers <- transfers + 1
           
-          infection_status[transfer] <- "Empty"
+          bed_status[transfer] <- "Empty"
           
-          infection_times <- infection.times.sample(T, infection_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
+          infection_times <- infection_times_sample(current_time, bed_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
           
-          discharge.times[transfer] <- Inf
-          transfer.times[transfer] <- Inf
-          latent.times[transfer] <- Inf
-          incubation.times[transfer] <- Inf
-          early.symptomatic.times[transfer] <- Inf
-          late.symptomatic.times[transfer] <- Inf
+          discharge_times[transfer] <- Inf
+          transfer_times[transfer] <- Inf
+          latent_times[transfer] <- Inf
+          incubation_times[transfer] <- Inf
+          early_symptomatic_times[transfer] <- Inf
+          late_symptomatic_times[transfer] <- Inf
           
-          latent.period[transfer] <- Inf
-          incubation.period[transfer] <- Inf
-          early.symptomatic.period[transfer] <- Inf
-          late.symptomatic.period[transfer] <- Inf
+          latent_period[transfer] <- Inf
+          incubation_period[transfer] <- Inf
+          early_symptomatic_period[transfer] <- Inf
+          late_symptomatic_period[transfer] <- Inf
         }
         
         
         
         
       }
-      if(event.time==first.latent.time){
+      if(event_time==first_latent_time){
         
-        infectious <- which.min(latent.times)
+        infectious <- which.min(latent_times)
         
-        infection_status[infectious] <- infectious_states[1]
+        bed_status[infectious] <- infectious_states[1]
         
-        infection_times <- infection.times.sample(T, infection_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
+        infection_times <- infection_times_sample(current_time, bed_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
         
-        latent.times[infectious] <- Inf
-        latent.period[infectious] <- Inf
-        incubation.times[infectious] <- T + incubation.period[infectious]
+        latent_times[infectious] <- Inf
+        latent_period[infectious] <- Inf
+        incubation_times[infectious] <- current_time + incubation_period[infectious]
         
         
       }
       
       
-      if(event.time==first.incubation.time){
+      if(event_time==first_incubation_time){
         
-        incubation <- which.min(incubation.times)
+        incubation <- which.min(incubation_times)
         
-        infection_status[incubation] <- infection_states[which(infection_states==infectious_states[1]) + 1] 
+        bed_status[incubation] <- all_states[which(all_states==infectious_states[1]) + 1] 
         
-        infection_times <- infection.times.sample(T, infection_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
+        infection_times <- infection_times_sample(current_time, bed_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
         
-        incubation.times[incubation] <- Inf
+        incubation_times[incubation] <- Inf
         
         
-        if(length(infection_states)>(which(infection_states==infectious_states[1]) + 1)){
-          early.symptomatic.times[incubation] <- T + early.symptomatic.period[incubation]
+        if(length(all_states)>(which(all_states==infectious_states[1]) + 1)){
+          early_symptomatic_times[incubation] <- current_time + early_symptomatic_period[incubation]
         }else{
-          early.symptomatic.times[incubation] <- Inf
+          early_symptomatic_times[incubation] <- Inf
         }
       }
       
-      if(event.time==first.early.symptomatic.time){
+      if(event_time==first_early_symptomatic_time){
         
-        early.symptomatic <- which.min(early.symptomatic.times)
+        early_symptomatic <- which.min(early_symptomatic_times)
         
-        infection_status[early.symptomatic] <- infection_states[which(infection_states==infectious_states[1]) + 2] 
+        bed_status[early_symptomatic] <- all_states[which(all_states==infectious_states[1]) + 2] 
         
-        infection_times <- infection.times.sample(T, infection_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
+        infection_times <- infection_times_sample(current_time, bed_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
         
-        early.symptomatic.times[early.symptomatic] <- Inf
-        if((length(infection_states)>which(infection_states==infectious_states[1]) + 2)){
-          late.symptomatic.times[early.symptomatic] <- T + late.symptomatic.period[incubation]
+        early_symptomatic_times[early_symptomatic] <- Inf
+        if((length(all_states)>which(all_states==infectious_states[1]) + 2)){
+          late_symptomatic_times[early_symptomatic] <- current_time + late_symptomatic_period[incubation]
         }else{
-          late.symptomatic.times[early.symptomatic] <- Inf
+          late_symptomatic_times[early_symptomatic] <- Inf
         }
       }
       
-      if(event.time==first.late.symptomatic.time){
+      if(event_time==first_late_symptomatic_time){
         
-        recovered <- which.min(late.symptomatic.times)
+        recovered <- which.min(late_symptomatic_times)
         
-        infection_status[recovered] <- "Recovered"
+        bed_status[recovered] <- "Recovered"
         
-        infection_times <- infection.times.sample(T, infection_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
+        infection_times <- infection_times_sample(current_time, bed_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
         
         
         
-        late.symptomatic.times[recovered] <- Inf
+        late_symptomatic_times[recovered] <- Inf
       }
       
-      if(event.time==end.restriction.time){
+      if(event_time==end_restriction_time){
         restrictions <- FALSE
-        end.restriction.time <- Inf
-        infection_rates[4, ] <- unrestricted.infection.rate
+        end_restriction_time <- Inf
+        infection_rates[4, ] <- unrestricted_infection_rate
         
         if(queue_departures==FALSE){
-          focus_bay_occupants <- which(!infection_status[focus_bay, ]%in%c("Empty", "No Bed"))
-          transfer.times[focus_bay, focus_bay_occupants] <- T + transfer.period[focus_bay, focus_bay_occupants]
+          focus_bay_occupants <- which(!bed_status[focus_bay, ]%in%c("Empty", "No Bed"))
+          transfer_times[focus_bay, focus_bay_occupants] <- current_time + transfer_period[focus_bay, focus_bay_occupants]
         }
         
         
         
         
-        infection_times <- infection.times.sample(T, infection_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
+        infection_times <- infection_times_sample(current_time, bed_status, infection_rates, focus_bay, n_infectious_states, spread_to_focus_bay)
       }
     }
     
   }
   
-  colnames(Metrics) <- c("Focus Bay infections", "Other bay infections", "New arrivals", "Blocked arrivals", "Unused Bed Days in the focus bay", 
+  colnames(metrics_table) <- c("Focus Bay infections", "Other bay infections", "New arrivals", "Blocked arrivals", "Unused Bed Days in the focus bay", 
                          "Unused bed days elsewhere in the ward", "Outbreak occurred", "Infectious discharges", "Infectious transfers",
                          "Infected discharges", "Infected transfers", "Days of delayed discharges", "Discharges", "Transfers")
-  rownames(Metrics) <- NULL
+  rownames(metrics_table) <- NULL
   
   
   if(return_metrics==TRUE){
-    return(Metrics)
+    return(metrics_table)
   }else{
-    return(infection_status)
+    return(bed_status)
   }
   
 }

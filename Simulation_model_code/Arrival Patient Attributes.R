@@ -50,104 +50,104 @@
 #'
 #' @examples
 #' set.seed()
-arrival.patient.attributes <- function(stopping_time, arrival_rate, transfer_rates, discharge_rates, recovery_rates, discharge_SD=c(1, 1), 
+arrival_patient_attributes <- function(stopping_time, arrival_rate, transfer_rates, discharge_rates, recovery_rates, discharge_SD=c(1, 1), 
                                        transfer_SD=c(1, 1), latent_SD=1, LOS_distribution="Exponential", latent_distribution="Exponential"){
 
 # -------------------------------------------------------------------------
 
   
   
-  mu.ward <- log((1/transfer_rates[1]^2)/sqrt(transfer_SD[1]^2 + 1/transfer_rates[1]^2))
-  sigma.ward <- sqrt(log((transfer_SD[1]*transfer_rates[1])^2 + 1))
-  scale.ward <- transfer_SD[1]^2 * transfer_rates[1]
-  shape.ward <- 1/(transfer_rates[1]^2 * transfer_SD[1]^2)
+  mu_ward <- log((1/transfer_rates[1]^2)/sqrt(transfer_SD[1]^2 + 1/transfer_rates[1]^2))
+  sigma_ward <- sqrt(log((transfer_SD[1]*transfer_rates[1])^2 + 1))
+  scale_ward <- transfer_SD[1]^2 * transfer_rates[1]
+  shape_ward <- 1/(transfer_rates[1]^2 * transfer_SD[1]^2)
   
-  mu.ward.infectious <- log((1/transfer_rates[2]^2)/sqrt(transfer_SD[2]^2 + 1/transfer_rates[2]^2))
-  sigma.ward.infectious <- sqrt(log((transfer_SD[2]*transfer_rates[2])^2 + 1))
-  scale.ward.infectious <- transfer_SD[2]^2 * transfer_rates[2]
-  shape.ward.infectious <- 1/(transfer_rates[2]^2 * transfer_SD[2]^2)
+  mu_ward_infectious <- log((1/transfer_rates[2]^2)/sqrt(transfer_SD[2]^2 + 1/transfer_rates[2]^2))
+  sigma_ward_infectious <- sqrt(log((transfer_SD[2]*transfer_rates[2])^2 + 1))
+  scale_ward_infectious <- transfer_SD[2]^2 * transfer_rates[2]
+  shape_ward_infectious <- 1/(transfer_rates[2]^2 * transfer_SD[2]^2)
   
-  mu.ward.discharge <- log((1/discharge_rates[1]^2)/sqrt(discharge_SD[1]^2 + 1/discharge_rates[1]^2))
-  sigma.ward.discharge <- sqrt(log((discharge_SD[1]*discharge_rates[1])^2 + 1))
-  scale.ward.discharge <- discharge_SD[1]^2 * discharge_rates[1]
-  shape.ward.discharge <- 1/(discharge_rates[1]^2 * discharge_SD[1]^2)
+  mu_ward_discharge <- log((1/discharge_rates[1]^2)/sqrt(discharge_SD[1]^2 + 1/discharge_rates[1]^2))
+  sigma_ward_discharge <- sqrt(log((discharge_SD[1]*discharge_rates[1])^2 + 1))
+  scale_ward_discharge <- discharge_SD[1]^2 * discharge_rates[1]
+  shape_ward_discharge <- 1/(discharge_rates[1]^2 * discharge_SD[1]^2)
   
-  mu.ward.discharge.infectious <- log((1/discharge_rates[2]^2)/sqrt(discharge_SD[2]^2 + 1/discharge_rates[2]^2))
-  sigma.ward.discharge.infectious <- sqrt(log((discharge_SD[2]*discharge_rates[2])^2 + 1))
-  scale.ward.discharge.infectious <- discharge_SD[2]^2 * discharge_rates[2]
-  shape.ward.discharge.infectious <- 1/(discharge_rates[2]^2 * discharge_SD[2]^2)
+  mu_ward_discharge_infectious <- log((1/discharge_rates[2]^2)/sqrt(discharge_SD[2]^2 + 1/discharge_rates[2]^2))
+  sigma_ward_discharge_infectious <- sqrt(log((discharge_SD[2]*discharge_rates[2])^2 + 1))
+  scale_ward_discharge_infectious <- discharge_SD[2]^2 * discharge_rates[2]
+  shape_ward_discharge_infectious <- 1/(discharge_rates[2]^2 * discharge_SD[2]^2)
   
   
-  scale.latent <- latent_SD^2 * recovery_rates[1]
-  shape.latent <- 1/(recovery_rates[1]^2 * latent_SD^2)
+  scale_latent <- latent_SD^2 * recovery_rates[1]
+  shape_latent <- 1/(recovery_rates[1]^2 * latent_SD^2)
   
-  T <- 0
+  current_time <- 0
   scheduled_arrival_times <- NULL
   
-  while(T <= stopping_time){
-    new.arrival.time <- T + rexp(1, arrival_rate)
+  while(current_time <= stopping_time){
+    new_arrival_time <- current_time + rexp(1, arrival_rate)
     
-    if(new.arrival.time<=stopping_time){
-      scheduled_arrival_times <- c(scheduled_arrival_times, new.arrival.time)
+    if(new_arrival_time<=stopping_time){
+      scheduled_arrival_times <- c(scheduled_arrival_times, new_arrival_time)
     }
-    T <- new.arrival.time
+    current_time <- new_arrival_time
   }
   
-  n.arrivals <- length(scheduled_arrival_times)
+  n_arrivals <- length(scheduled_arrival_times)
   
-  if(n.arrivals>0){
+  if(n_arrivals>0){
     if(recovery_rates[1]>0){
       if(latent_distribution=="Exponential"){
-        arrival_latent_period <- rexp(n.arrivals, recovery_rates[1])
+        arrival_latent_period <- rexp(n_arrivals, recovery_rates[1])
       }else if(latent_distribution=="Gamma"){
-        arrival_latent_period <- rgamma(n.arrivals, shape=shape.latent, scale=scale.latent)
+        arrival_latent_period <- rgamma(n_arrivals, shape=shape_latent, scale=scale_latent)
       }
     }else{
-      arrival_latent_period <- rep(Inf, n.arrivals)
+      arrival_latent_period <- rep(Inf, n_arrivals)
     }
     
     
     if(recovery_rates[2]>0){
-      arrival_incubation_period <- rexp(n.arrivals, recovery_rates[2])
+      arrival_incubation_period <- rexp(n_arrivals, recovery_rates[2])
     }else{
-      arrival_incubation_period <- rep(Inf, n.arrivals)
+      arrival_incubation_period <- rep(Inf, n_arrivals)
     }
     
     if(length(recovery_rates)>2){
-      arrival_early_symptomatic_period <- rexp(n.arrivals, recovery_rates[3])
+      arrival_early_symptomatic_period <- rexp(n_arrivals, recovery_rates[3])
     }else{
-      arrival_early_symptomatic_period <- rep(Inf, n.arrivals)
+      arrival_early_symptomatic_period <- rep(Inf, n_arrivals)
     }
     
     if(length(recovery_rates)>3){
-      arrival_late_symptomatic_period <- rexp(n.arrivals, recovery_rates[4])
+      arrival_late_symptomatic_period <- rexp(n_arrivals, recovery_rates[4])
     }else{
-      arrival_late_symptomatic_period <- rep(Inf, n.arrivals)
+      arrival_late_symptomatic_period <- rep(Inf, n_arrivals)
     }
     
     
     if(transfer_rates[1]>0){
       if(LOS_distribution=="Exponential"){
-        arrival_transfer_times <- rexp(n.arrivals, transfer_rates[1])
+        arrival_transfer_times <- rexp(n_arrivals, transfer_rates[1])
       }else if(LOS_distribution=="Lognormal"){
-        arrival_transfer_times <- rlnorm(n.arrivals, mu.ward, sigma.ward)
+        arrival_transfer_times <- rlnorm(n_arrivals, mu_ward, sigma_ward)
       }else if(LOS_distribution=="Gamma"){
-        arrival_transfer_times <- rgamma(n.arrivals, shape=shape.ward, scale=scale.ward)
+        arrival_transfer_times <- rgamma(n_arrivals, shape=shape_ward, scale=scale_ward)
       }
     }else{
-      arrival_transfer_times <- rep(Inf, n.arrivals)
+      arrival_transfer_times <- rep(Inf, n_arrivals)
     }
     
     if(discharge_rates[1]>0){
       if(LOS_distribution=="Exponential"){
-        arrival_discharge_times <- rexp(n.arrivals, discharge_rates[1])
+        arrival_discharge_times <- rexp(n_arrivals, discharge_rates[1])
       }else if(LOS_distribution=="Lognormal"){
-        arrival_discharge_times <- rlnorm(n.arrivals, mu.ward.discharge, sigma.ward.discharge)
+        arrival_discharge_times <- rlnorm(n_arrivals, mu_ward_discharge, sigma_ward_discharge)
       }else if(LOS_distribution=="Gamma"){
-        arrival_discharge_times <- rgamma(n.arrivals, shape=shape.ward.discharge, scale=scale.ward.discharge)
+        arrival_discharge_times <- rgamma(n_arrivals, shape=shape_ward_discharge, scale=scale_ward_discharge)
       }
     }else{
-      arrival_discharge_times <- rep(Inf, n.arrivals)
+      arrival_discharge_times <- rep(Inf, n_arrivals)
     }
     
     

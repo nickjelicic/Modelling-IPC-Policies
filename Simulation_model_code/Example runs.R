@@ -3,7 +3,7 @@
 source("Arrival Patient Attributes.R")
 
 set.seed(100)
-arrival.patient.attributes(stopping_time=5, arrival_rate=1, transfer_rates=c(1/4, 1/4), discharge_rates=c(1/5, 1/5), recovery_rates=c(1/2, 1/3), 
+arrival_patient_attributes(stopping_time=5, arrival_rate=1, transfer_rates=c(1/4, 1/4), discharge_rates=c(1/5, 1/5), recovery_rates=c(1/2, 1/3), 
                            discharge_SD=c(1, 1), transfer_SD=c(1, 1), latent_SD=1, LOS_distribution="Gamma", latent_distribution="Gamma")
 
 
@@ -36,12 +36,12 @@ source("Infection Times.R")
 
 
 
-infection_status <- rbind(c("Susceptible", "Susceptible"), 
+bed_status <- rbind(c("Susceptible", "Susceptible"), 
                           c("Infectious", "Infectious"),
                           c("Susceptible", "Susceptible"))
 infection_rates <- rbind(0.05, 0.1, 0.5, 0.2)
 set.seed(1000)
-infection.times.sample(current_time=0, infection_status, infection_rates, focus_bay=2, n_infectious_states=1, spread_to_focus_bay=TRUE)
+infection_times_sample(current_time=0, bed_status, infection_rates, focus_bay=2, n_infectious_states=1, spread_to_focus_bay=TRUE)
 
 
 #should return
@@ -55,11 +55,11 @@ infection.times.sample(current_time=0, infection_status, infection_rates, focus_
 ## Initial Patient Attributes example
 source("Initial Patient Attributes.R")
 
-infection_status <- rbind(c("Susceptible", "Susceptible"), 
+bed_status <- rbind(c("Susceptible", "Susceptible"), 
                           c("Infectious", "Infectious"),
                           c("Susceptible", "Susceptible"))
 set.seed(100)
-initial.patient.attributes(infection_status,n_infectious_states=1, transfer_rates=c(1/4, 1/4), discharge_rates=c(1/5, 1/5), recovery_rates=c(1/2, 1/3),
+initial_patient_attributes(bed_status,n_infectious_states=1, transfer_rates=c(1/4, 1/4), discharge_rates=c(1/5, 1/5), recovery_rates=c(1/2, 1/3),
   discharge_SD=c(1, 1), 
   transfer_SD=c(1, 1), latent_SD=1, LOS_distribution="Gamma", latent_distribution="Gamma")
 
@@ -108,26 +108,26 @@ source("Infection Times.R")
 source("Simulation Metrics.R")
 source("Ward Simulation.R")
 source("Initial Patient Attributes.R")
-infection_status <- rbind(c("Susceptible", "Susceptible"), 
+bed_status <- rbind(c("Susceptible", "Susceptible"), 
                           c("Infectious", "Infectious"),
                           c("Susceptible", "Susceptible"))
 infection_rates <- rbind(0.05, 0.1, 0.5, 0.2)
 
 set.seed(100)
-init_patient_attributes <- initial.patient.attributes(infection_status,n_infectious_states=1, transfer_rates=c(1/4, 1/4), 
+init_patient_attributes <- initial_patient_attributes(bed_status,n_infectious_states=1, transfer_rates=c(1/4, 1/4), 
                                                       discharge_rates=c(1/5, 1/5), recovery_rates=c(1/2, 1/3), discharge_SD=c(1, 1), 
                                                       transfer_SD=c(1, 1), latent_SD=1, LOS_distribution="Gamma", latent_distribution="Gamma")
 set.seed(100)
-infection_times <- infection.times.sample(current_time=0, infection_status, infection_rates, focus_bay=2, n_infectious_states=1, spread_to_focus_bay=TRUE)
+infection_times <- infection_times_sample(current_time=0, bed_status, infection_rates, focus_bay=2, n_infectious_states=1, spread_to_focus_bay=TRUE)
 
 set.seed(100)
-new_patient_attributes <- arrival.patient.attributes(stopping_time=5, arrival_rate=1, transfer_rates=c(1/4, 1/4), discharge_rates=c(1/5, 1/5), recovery_rates=c(1/2, 1/3), 
+new_patient_attributes <- arrival_patient_attributes(stopping_time=5, arrival_rate=1, transfer_rates=c(1/4, 1/4), discharge_rates=c(1/5, 1/5), recovery_rates=c(1/2, 1/3), 
                            discharge_SD=c(1, 1), transfer_SD=c(1, 1), latent_SD=1, LOS_distribution="Gamma", latent_distribution="Gamma")
 
 set.seed(100)
-ward.simulation.paired(focus_bay=2, n_infectious_states=1,
+ward_simulation_paired(focus_bay=2, n_infectious_states=1,
   infection_rates, time_seq=5, 
-  infection_status, init_patient_attributes, infection_times,
+  bed_status, init_patient_attributes, infection_times,
   restrictions=FALSE, quarantine_time=0, close_bay_coef=0, spread_to_focus_bay=FALSE, queue_departures=TRUE, 
   new_patient_attributes)
 
@@ -151,7 +151,7 @@ infection_rates <- rbind(0.05, 0.1, 0.5, 0.2)
 infection_distribution <- c(1/4, 1/4, 1/4, 1/4)
 
 set.seed(100)
-simulation.ward.metrics(ward_configuration, bay_occupants,  n_infectious_states=1,
+simulation_ward_metrics(ward_configuration, bay_occupants,  n_infectious_states=1,
                         infection_distribution, arrival_rate=1, transfer_rates=c(1/4, 1/4), discharge_rates=c(1/5, 1/5),
                         infection_rates, recovery_rates=c(1/2, 1/3), quarantine_time=3, spread_coef=infection_rates[4,]/infection_rates[3,], close_bay_coef=0.5, 
                         time_seq=c(7, 14), LOS_distribution="Gamma",
